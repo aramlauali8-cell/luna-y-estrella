@@ -40,8 +40,10 @@ async function subir(f) {
   if (!K) { alert("Primero conecta Supabase (mira el README) para guardar fotos y videos."); return null; }
   if (f.size > 50e6) { alert("Ese archivo pesa más de 50 MB. Usa uno más liviano."); return null; }
   const {b, ext} = await reducir(f), n = Date.now() + Math.random().toString(36).slice(2, 6) + "." + ext;
-  const r = await fetch(`${C.supabaseUrl}/storage/v1/object/medios/${n}`, {method:"POST", headers:{...H,"Content-Type":b.type || "application/octet-stream"}, body: b});
-  if (!r.ok) { alert("No se pudo subir el archivo."); return null; }
+  let r;
+  try { r = await fetch(`${C.supabaseUrl}/storage/v1/object/medios/${n}`, {method:"POST", headers:{...H,"Content-Type":b.type || "application/octet-stream"}, body: b}); }
+  catch (e) { alert("No hay conexión con Supabase. Revisa tu internet y la URL en config.js."); return null; }
+  if (!r.ok) { let m = ""; try { m = (await r.json()).message || ""; } catch (e) {} alert("No se pudo subir (error " + r.status + "): " + m); return null; }
   return PUB + n;
 }
 function borrarArchivo(u) { if (K && u.startsWith(PUB)) fetch(`${C.supabaseUrl}/storage/v1/object/medios/${u.slice(PUB.length)}`, {method:"DELETE", headers:H}).catch(() => {}); }
